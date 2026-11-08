@@ -1,79 +1,282 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#000000">
-<title>Palm Logo AR</title>
-<style>
-  :root {
-    --brand: #3b82f6;
-    --accent: #ffd166;
-    --glass: rgba(20, 22, 30, 0.45);
-    --sat: env(safe-area-inset-top, 0px);
-    --sab: env(safe-area-inset-bottom, 0px);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
-    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; color: #fff; }
-  #video, #gl { position: fixed; inset: 0; width: 100%; height: 100%; }
-  #video { object-fit: cover; }
-  #gl { pointer-events: none; }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Palm Logo AR</title>
+  <style>
+    :root {
+      --brand: #3b82f6;
+      --accent: #ffd166;
+      --glass: rgba(20, 22, 30, 0.45);
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
 
-  .btn { border: 1px solid rgba(255,255,255,.25); background: var(--glass); color: #fff;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-radius: 999px; padding: 10px 16px; font-size: 15px; font-weight: 600; cursor: pointer; }
-  .btn:active { transform: scale(.96); }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  #topbar { position: fixed; top: calc(var(--sat) + 12px); left: 12px; right: 12px;
-    display: flex; justify-content: space-between; gap: 8px; z-index: 5; }
-  #topbar .group { display: flex; gap: 8px; }
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      color: #fff;
+    }
 
-  #bottombar { position: fixed; left: 0; right: 0; bottom: calc(var(--sab) + 28px);
-    display: flex; justify-content: center; align-items: center; z-index: 5; }
-  #shutter { width: 78px; height: 78px; border-radius: 50%; border: 5px solid #fff;
-    background: rgba(255,255,255,.25); cursor: pointer; transition: transform .1s; }
-  #shutter:active { transform: scale(.9); background: rgba(255,255,255,.6); }
+    #video,
+    #gl {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-  #hint { position: fixed; left: 50%; bottom: calc(var(--sab) + 130px); transform: translateX(-50%);
-    padding: 10px 18px; border-radius: 999px; background: var(--glass); font-size: 15px;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    transition: opacity .3s; white-space: nowrap; z-index: 4; }
-  #hint.hide { opacity: 0; }
+    #video {
+      object-fit: cover;
+    }
 
-  #debug { position: fixed; left: 12px; top: calc(var(--sat) + 64px); font: 12px/1.4 ui-monospace, monospace;
-    background: rgba(0,0,0,.5); padding: 6px 8px; border-radius: 6px; display: none; z-index: 5; }
+    #gl {
+      pointer-events: none;
+    }
 
-  #countdown { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 140px; font-weight: 800; text-shadow: 0 4px 30px rgba(0,0,0,.5); pointer-events: none; z-index: 6; }
-  #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 7; }
-  #flash.on { animation: flash .45s ease-out; }
-  @keyframes flash { 0% { opacity: .9 } 100% { opacity: 0 } }
+    .btn {
+      border: 1px solid rgba(255, 255, 255, .25);
+      background: var(--glass);
+      color: #fff;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
-  /* overlays */
-  .overlay { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center;
-    background: radial-gradient(circle at 50% 35%, #1b2340 0%, #07080d 70%); }
-  .overlay h1 { margin: 0; font-size: 30px; letter-spacing: .02em; }
-  .overlay p { margin: 0; opacity: .8; line-height: 1.6; }
-  .big { font-size: 64px; }
-  #startBtn { font-size: 18px; padding: 16px 34px; background: var(--brand); border: none; }
-  #status { font-size: 13px; opacity: .7; min-height: 1.2em; }
+    .btn:active {
+      transform: scale(.96);
+    }
 
-  #preview { display: none; background: rgba(0,0,0,.92); }
-  #preview img { max-width: 92vw; max-height: 68vh; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
-  #preview .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  #preview a.btn { text-decoration: none; }
-  .primary { background: var(--brand) !important; border: none !important; }
+    #topbar {
+      position: fixed;
+      top: calc(var(--sat) + 12px);
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 5;
+    }
 
-  #settings { display: none; position: fixed; top: calc(var(--sat) + 64px); right: 12px; z-index: 8;
-    width: min(320px, calc(100vw - 24px)); background: rgba(16,18,26,.92); border-radius: 16px; padding: 16px;
-    border: 1px solid rgba(255,255,255,.15); font-size: 14px; }
-  #settings label { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
-  #settings input[type=range] { flex: 1; }
-  #settings .note { font-size: 12px; opacity: .6; line-height: 1.5; }
-</style>
-<script type="importmap">
+    #topbar .group {
+      display: flex;
+      gap: 8px;
+    }
+
+    #bottombar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--sab) + 28px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 5;
+    }
+
+    #shutter {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      background: rgba(255, 255, 255, .25);
+      cursor: pointer;
+      transition: transform .1s;
+    }
+
+    #shutter:active {
+      transform: scale(.9);
+      background: rgba(255, 255, 255, .6);
+    }
+
+    #hint {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--sab) + 130px);
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--glass);
+      font-size: 15px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: opacity .3s;
+      white-space: nowrap;
+      z-index: 4;
+    }
+
+    #hint.hide {
+      opacity: 0;
+    }
+
+    #debug {
+      position: fixed;
+      left: 12px;
+      top: calc(var(--sat) + 64px);
+      font: 12px/1.4 ui-monospace, monospace;
+      background: rgba(0, 0, 0, .5);
+      padding: 6px 8px;
+      border-radius: 6px;
+      display: none;
+      z-index: 5;
+    }
+
+    #countdown {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 140px;
+      font-weight: 800;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, .5);
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 7;
+    }
+
+    #flash.on {
+      animation: flash .45s ease-out;
+    }
+
+    @keyframes flash {
+      0% {
+        opacity: .9
+      }
+
+      100% {
+        opacity: 0
+      }
+    }
+
+    /* overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 24px;
+      text-align: center;
+      background: radial-gradient(circle at 50% 35%, #1b2340 0%, #07080d 70%);
+    }
+
+    .overlay h1 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: .02em;
+    }
+
+    .overlay p {
+      margin: 0;
+      opacity: .8;
+      line-height: 1.6;
+    }
+
+    .big {
+      font-size: 64px;
+    }
+
+    #startBtn {
+      font-size: 18px;
+      padding: 16px 34px;
+      background: var(--brand);
+      border: none;
+    }
+
+    #status {
+      font-size: 13px;
+      opacity: .7;
+      min-height: 1.2em;
+    }
+
+    #preview {
+      display: none;
+      background: rgba(0, 0, 0, .92);
+    }
+
+    #preview img {
+      max-width: 92vw;
+      max-height: 68vh;
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .6);
+    }
+
+    #preview .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #preview a.btn {
+      text-decoration: none;
+    }
+
+    .primary {
+      background: var(--brand) !important;
+      border: none !important;
+    }
+
+    #settings {
+      display: none;
+      position: fixed;
+      top: calc(var(--sat) + 64px);
+      right: 12px;
+      z-index: 8;
+      width: min(320px, calc(100vw - 24px));
+      background: rgba(16, 18, 26, .92);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      font-size: 14px;
+    }
+
+    #settings label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    #settings input[type=range] {
+      flex: 1;
+    }
+
+    #settings .note {
+      font-size: 12px;
+      opacity: .6;
+      line-height: 1.5;
+    }
+  </style>
+  <script type="importmap">
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
@@ -82,82 +285,83 @@
 }
 </script>
 </head>
+
 <body>
-<video id="video" playsinline muted autoplay></video>
-<canvas id="gl"></canvas>
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="gl"></canvas>
 
-<div id="topbar">
-  <div class="group">
-    <button class="btn" id="switchBtn" title="カメラ切替">🔄</button>
-    <button class="btn" id="timerBtn" title="セルフタイマー">⏱ OFF</button>
+  <div id="topbar">
+    <div class="group">
+      <button class="btn" id="switchBtn" title="カメラ切替">🔄</button>
+      <button class="btn" id="timerBtn" title="セルフタイマー">⏱ OFF</button>
+    </div>
+    <div class="group">
+      <button class="btn" id="settingsBtn" title="設定">⚙️</button>
+    </div>
   </div>
-  <div class="group">
-    <button class="btn" id="settingsBtn" title="設定">⚙️</button>
+
+  <div id="settings">
+    <label>ロゴ差し替え (.svg / .glb)</label>
+    <input type="file" id="logoFile" accept=".svg,.glb,.gltf,image/svg+xml">
+    <label>サイズ <input type="range" id="sizeRange" min="0.6" max="2.4" step="0.05" value="1.3"></label>
+    <label>回転速度 <input type="range" id="spinRange" min="0" max="5" step="0.1" value="1.6"></label>
+    <label>感度 <input type="range" id="thrRange" min="0.15" max="0.85" step="0.05" value="0.45"></label>
+    <label><input type="checkbox" id="flipChk"> 手のひら判定を反転</label>
+    <label><input type="checkbox" id="anyChk"> 向きに関係なく手があれば表示</label>
+    <label><input type="checkbox" id="debugChk"> デバッグ表示</label>
+    <div class="note">手の甲を上にした時に出てしまう場合は「反転」をONにしてください。</div>
   </div>
-</div>
 
-<div id="settings">
-  <label>ロゴ差し替え (.svg / .glb)</label>
-  <input type="file" id="logoFile" accept=".svg,.glb,.gltf,image/svg+xml">
-  <label>サイズ <input type="range" id="sizeRange" min="0.6" max="2.4" step="0.05" value="1.3"></label>
-  <label>回転速度 <input type="range" id="spinRange" min="0" max="5" step="0.1" value="1.6"></label>
-  <label>感度 <input type="range" id="thrRange" min="0.15" max="0.85" step="0.05" value="0.45"></label>
-  <label><input type="checkbox" id="flipChk"> 手のひら判定を反転</label>
-  <label><input type="checkbox" id="anyChk"> 向きに関係なく手があれば表示</label>
-  <label><input type="checkbox" id="debugChk"> デバッグ表示</label>
-  <div class="note">手の甲を上にした時に出てしまう場合は「反転」をONにしてください。</div>
-</div>
+  <div id="debug"></div>
+  <div id="hint" class="hide">手のひらを上に向けてね 🫴</div>
+  <div id="countdown"></div>
+  <div id="flash"></div>
+  <div id="bottombar"><button id="shutter" aria-label="撮影"></button></div>
 
-<div id="debug"></div>
-<div id="hint" class="hide">手のひらを上に向けてね 🫴</div>
-<div id="countdown"></div>
-<div id="flash"></div>
-<div id="bottombar"><button id="shutter" aria-label="撮影"></button></div>
-
-<div class="overlay" id="startScreen">
-  <div class="big">🫴✨</div>
-  <h1>Palm Logo AR</h1>
-  <p>手のひらを上に向けると<br>ロゴが現れます。好きなタイミングで撮影しよう！</p>
-  <button class="btn" id="startBtn">カメラを起動</button>
-  <div id="status"></div>
-</div>
-
-<div class="overlay" id="preview">
-  <img id="previewImg" alt="撮影した写真">
-  <p style="font-size:13px">保存できない場合は画像を長押ししてください</p>
-  <div class="row">
-    <a class="btn primary" id="saveBtn" download="photo.png">保存</a>
-    <button class="btn" id="shareBtn" style="display:none">シェア</button>
-    <button class="btn" id="closeBtn">撮り直す</button>
+  <div class="overlay" id="startScreen">
+    <div class="big">🫴✨</div>
+    <h1>Palm Logo AR</h1>
+    <p>手のひらを上に向けると<br>ロゴが現れます。好きなタイミングで撮影しよう！</p>
+    <button class="btn" id="startBtn">カメラを起動</button>
+    <div id="status"></div>
   </div>
-</div>
 
-<script type="module">
-import * as THREE from 'three';
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
+  <div class="overlay" id="preview">
+    <img id="previewImg" alt="撮影した写真">
+    <p style="font-size:13px">保存できない場合は画像を長押ししてください</p>
+    <div class="row">
+      <a class="btn primary" id="saveBtn" download="photo.png">保存</a>
+      <button class="btn" id="shareBtn" style="display:none">シェア</button>
+      <button class="btn" id="closeBtn">撮り直す</button>
+    </div>
+  </div>
 
-/* =========================================================
- * ここを企業ごとに書き換える
- * =======================================================*/
-const CONFIG = {
-  // 企業ロゴのファイル（同じフォルダに置く）。null なら下の DEFAULT_SVG を使用
-  //   例: 'logo.svg'（ベクターを押し出して3D化） / 'logo.glb'（3Dモデルをそのまま使用）
-  logoUrl: null,
-  brandColor: '#3b82f6',   // グロー・ビームの色
-  accentColor: '#ffd166',  // パーティクルの差し色
-  brandName: 'YOUR BRAND', // 写真フレームに入る名前
-  hashtag: '#YourBrand',   // 写真フレームに入るハッシュタグ
-  frameOnPhoto: true,      // 写真に下部フレームを入れるか
-  logoSize: 1.3,           // 手のひら幅に対するロゴの大きさ
-  spinSpeed: 1.6,          // 回転速度 (rad/s)
-  palmUpThreshold: 0.45,   // 手のひら上向き判定の閾値 (0〜1)
-};
+  <script type="module">
+    import * as THREE from 'three';
+    import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
 
-// 仮ロゴ（六角形＋星のオリジナル図形）。企業ロゴのSVGに置き換えてOK
-const DEFAULT_SVG = `
+    /* =========================================================
+     * ここを企業ごとに書き換える
+     * =======================================================*/
+    const CONFIG = {
+      // 企業ロゴのファイル（同じフォルダに置く）。null なら下の DEFAULT_SVG を使用
+      //   例: 'logo.svg'（ベクターを押し出して3D化） / 'logo.glb'（3Dモデルをそのまま使用）
+      logoUrl: 'logo.glb',
+      brandColor: '#3b82f6',   // グロー・ビームの色
+      accentColor: '#ffd166',  // パーティクルの差し色
+      brandName: 'YOUR BRAND', // 写真フレームに入る名前
+      hashtag: '#YourBrand',   // 写真フレームに入るハッシュタグ
+      frameOnPhoto: true,      // 写真に下部フレームを入れるか
+      logoSize: 1.3,           // 手のひら幅に対するロゴの大きさ
+      spinSpeed: 1.6,          // 回転速度 (rad/s)
+      palmUpThreshold: 0.45,   // 手のひら上向き判定の閾値 (0〜1)
+    };
+
+    // 仮ロゴ（六角形＋星のオリジナル図形）。企業ロゴのSVGに置き換えてOK
+    const DEFAULT_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <path fill="#3b82f6" fill-rule="evenodd"
     d="M100 10 L178 55 L178 145 L100 190 L22 145 L22 55 Z M100 46 L147 73 L147 127 L100 154 L53 127 L53 73 Z"/>
@@ -165,493 +369,500 @@ const DEFAULT_SVG = `
     d="M100 66 L109 90 L134 90 L114 105 L121 130 L100 115 L79 130 L86 105 L66 90 L91 90 Z"/>
 </svg>`;
 
-/* ========================================================= */
-const $ = (id) => document.getElementById(id);
-const video = $('video');
-const glCanvas = $('gl');
-document.documentElement.style.setProperty('--brand', CONFIG.brandColor);
-document.documentElement.style.setProperty('--accent', CONFIG.accentColor);
+    /* ========================================================= */
+    const $ = (id) => document.getElementById(id);
+    const video = $('video');
+    const glCanvas = $('gl');
+    document.documentElement.style.setProperty('--brand', CONFIG.brandColor);
+    document.documentElement.style.setProperty('--accent', CONFIG.accentColor);
 
-const settings = {
-  flip: false, any: false, debug: false,
-  size: CONFIG.logoSize, spin: CONFIG.spinSpeed, thr: CONFIG.palmUpThreshold,
-};
+    const settings = {
+      flip: false, any: false, debug: false,
+      size: CONFIG.logoSize, spin: CONFIG.spinSpeed, thr: CONFIG.palmUpThreshold,
+    };
 
-/* ---------- Three.js ---------- */
-const renderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-const scene = new THREE.Scene();
-scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
-keyLight.position.set(300, 600, 800);
-scene.add(keyLight);
+    /* ---------- Three.js ---------- */
+    const renderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    const scene = new THREE.Scene();
+    scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    keyLight.position.set(300, 600, 800);
+    scene.add(keyLight);
 
-// z=0 の平面で 1unit = 1CSSpx になるパースカメラ
-const FOV = 40;
-const camera = new THREE.PerspectiveCamera(FOV, 1, 1, 20000);
-let W = 0, H = 0;
-function resize() {
-  W = window.innerWidth; H = window.innerHeight;
-  renderer.setSize(W, H, false);
-  camera.aspect = W / H;
-  camera.position.set(0, 0, (H / 2) / Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
-  camera.updateProjectionMatrix();
-  particles.material.uniforms.uDist.value = camera.position.z;
-  particles.material.uniforms.uPR.value = renderer.getPixelRatio();
-}
+    // z=0 の平面で 1unit = 1CSSpx になるパースカメラ
+    const FOV = 40;
+    const camera = new THREE.PerspectiveCamera(FOV, 1, 1, 20000);
+    let W = 0, H = 0;
+    function resize() {
+      W = window.innerWidth; H = window.innerHeight;
+      renderer.setSize(W, H, false);
+      camera.aspect = W / H;
+      camera.position.set(0, 0, (H / 2) / Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
+      camera.updateProjectionMatrix();
+      particles.material.uniforms.uDist.value = camera.position.z;
+      particles.material.uniforms.uPR.value = renderer.getPixelRatio();
+    }
 
-// 柔らかい光のテクスチャ
-function glowTexture() {
-  const c = document.createElement('canvas'); c.width = c.height = 128;
-  const g = c.getContext('2d');
-  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  grd.addColorStop(0, 'rgba(255,255,255,1)');
-  grd.addColorStop(0.25, 'rgba(255,255,255,.55)');
-  grd.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-const GLOW = glowTexture();
-const brand = new THREE.Color(CONFIG.brandColor);
-const accent = new THREE.Color(CONFIG.accentColor);
+    // 柔らかい光のテクスチャ
+    function glowTexture() {
+      const c = document.createElement('canvas'); c.width = c.height = 128;
+      const g = c.getContext('2d');
+      const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grd.addColorStop(0, 'rgba(255,255,255,1)');
+      grd.addColorStop(0.25, 'rgba(255,255,255,.55)');
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    }
+    const GLOW = glowTexture();
+    const brand = new THREE.Color(CONFIG.brandColor);
+    const accent = new THREE.Color(CONFIG.accentColor);
 
-// rig = 手のひらの位置に追従するグループ（単位: 手のひらサイズ=1）
-const rig = new THREE.Group();
-scene.add(rig);
+    // rig = 手のひらの位置に追従するグループ（単位: 手のひらサイズ=1）
+    const rig = new THREE.Group();
+    scene.add(rig);
 
-// ロゴ
-const logoHolder = new THREE.Group();     // 浮遊・出現スケール
-const logoSpin = new THREE.Group();       // 回転
-logoHolder.add(logoSpin);
-rig.add(logoHolder);
+    // ロゴ
+    const logoHolder = new THREE.Group();     // 浮遊・出現スケール
+    const logoSpin = new THREE.Group();       // 回転
+    logoHolder.add(logoSpin);
+    rig.add(logoHolder);
 
-// 背面グロー
-const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: GLOW, color: brand, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8 }));
-glow.renderOrder = -1;
-rig.add(glow);
+    // 背面グロー
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: GLOW, color: brand, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8
+    }));
+    glow.renderOrder = -1;
+    rig.add(glow);
 
-// 手のひらの光の輪（波紋）
-const rings = [0, 1].map(() => {
-  const m = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.5, 72),
-    new THREE.MeshBasicMaterial({ color: brand, transparent: true, blending: THREE.AdditiveBlending,
-      depthWrite: false, side: THREE.DoubleSide }));
-  m.rotation.x = -Math.PI * 0.4;
-  rig.add(m); return m;
-});
+    // 手のひらの光の輪（波紋）
+    const rings = [0, 1].map(() => {
+      const m = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.5, 72),
+        new THREE.MeshBasicMaterial({
+          color: brand, transparent: true, blending: THREE.AdditiveBlending,
+          depthWrite: false, side: THREE.DoubleSide
+        }));
+      m.rotation.x = -Math.PI * 0.4;
+      rig.add(m); return m;
+    });
 
-// 光の柱（下から上にフェード）
-const beamMat = new THREE.ShaderMaterial({
-  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-  uniforms: { uColor: { value: brand }, uOpacity: { value: 0 }, uTime: { value: 0 } },
-  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-  fragmentShader: `uniform vec3 uColor; uniform float uOpacity; uniform float uTime; varying vec2 vUv;
+    // 光の柱（下から上にフェード）
+    const beamMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      uniforms: { uColor: { value: brand }, uOpacity: { value: 0 }, uTime: { value: 0 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uOpacity; uniform float uTime; varying vec2 vUv;
     void main(){
       float fade = pow(1.0 - vUv.y, 1.6);
       float edge = pow(sin(vUv.x * 3.14159), 2.0);
       float stripes = 0.75 + 0.25 * sin(vUv.y * 18.0 - uTime * 4.0);
       gl_FragColor = vec4(uColor * 1.4, fade * edge * stripes * uOpacity);
     }`,
-});
-const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.22, 1, 40, 1, true), beamMat);
-rig.add(beam);
+    });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.22, 1, 40, 1, true), beamMat);
+    rig.add(beam);
 
-// パーティクル（ワールド座標で管理）
-const MAX_P = 260;
-const pData = Array.from({ length: MAX_P }, () => ({ alive: false, p: new THREE.Vector3(), v: new THREE.Vector3(), life: 0, max: 1, size: 10, c: new THREE.Color() }));
-const pGeo = new THREE.BufferGeometry();
-pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_P * 3), 3));
-pGeo.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(MAX_P * 3), 3));
-pGeo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(MAX_P), 1));
-pGeo.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(MAX_P), 1));
-const particles = new THREE.Points(pGeo, new THREE.ShaderMaterial({
-  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-  uniforms: { uDist: { value: 1000 }, uPR: { value: 1 }, uMap: { value: GLOW } },
-  vertexShader: `attribute vec3 aColor; attribute float aSize; attribute float aAlpha;
+    // パーティクル（ワールド座標で管理）
+    const MAX_P = 260;
+    const pData = Array.from({ length: MAX_P }, () => ({ alive: false, p: new THREE.Vector3(), v: new THREE.Vector3(), life: 0, max: 1, size: 10, c: new THREE.Color() }));
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_P * 3), 3));
+    pGeo.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(MAX_P * 3), 3));
+    pGeo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(MAX_P), 1));
+    pGeo.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(MAX_P), 1));
+    const particles = new THREE.Points(pGeo, new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uDist: { value: 1000 }, uPR: { value: 1 }, uMap: { value: GLOW } },
+      vertexShader: `attribute vec3 aColor; attribute float aSize; attribute float aAlpha;
     uniform float uDist; uniform float uPR; varying vec3 vC; varying float vA;
     void main(){ vC = aColor; vA = aAlpha;
       vec4 mv = modelViewMatrix * vec4(position,1.0);
       gl_PointSize = aSize * uPR * (uDist / -mv.z);
       gl_Position = projectionMatrix * mv; }`,
-  fragmentShader: `uniform sampler2D uMap; varying vec3 vC; varying float vA;
+      fragmentShader: `uniform sampler2D uMap; varying vec3 vC; varying float vA;
     void main(){ vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * 1.5, t.a * vA); }`,
-}));
-particles.frustumCulled = false;
-scene.add(particles);
+    }));
+    particles.frustumCulled = false;
+    scene.add(particles);
 
-function spawn(pos, vel, life, size, color) {
-  const d = pData.find((q) => !q.alive);
-  if (!d) return;
-  d.alive = true; d.p.copy(pos); d.v.copy(vel); d.life = 0; d.max = life; d.size = size; d.c.copy(color);
-}
-const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), white = new THREE.Color(1, 1, 1);
-function randColor() { const r = Math.random(); return r < 0.4 ? brand : r < 0.75 ? accent : white; }
-
-function updateParticles(dt) {
-  const pos = pGeo.attributes.position.array, col = pGeo.attributes.aColor.array;
-  const siz = pGeo.attributes.aSize.array, alp = pGeo.attributes.aAlpha.array;
-  pData.forEach((d, i) => {
-    if (d.alive) {
-      d.life += dt;
-      if (d.life >= d.max) d.alive = false;
-      d.v.multiplyScalar(Math.pow(0.35, dt));      // 減速
-      d.v.y += 30 * dt;                             // 上昇気流
-      d.p.addScaledVector(d.v, dt);
+    function spawn(pos, vel, life, size, color) {
+      const d = pData.find((q) => !q.alive);
+      if (!d) return;
+      d.alive = true; d.p.copy(pos); d.v.copy(vel); d.life = 0; d.max = life; d.size = size; d.c.copy(color);
     }
-    const k = d.alive ? d.life / d.max : 1;
-    pos[i * 3] = d.p.x; pos[i * 3 + 1] = d.p.y; pos[i * 3 + 2] = d.p.z;
-    col[i * 3] = d.c.r; col[i * 3 + 1] = d.c.g; col[i * 3 + 2] = d.c.b;
-    siz[i] = d.size * (1 - k * 0.5);
-    alp[i] = d.alive ? Math.sin(Math.min(1, k) * Math.PI) * (0.7 + 0.3 * Math.sin(d.life * 25 + i)) : 0;
-  });
-  for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) pGeo.attributes[k].needsUpdate = true;
-}
+    const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), white = new THREE.Color(1, 1, 1);
+    function randColor() { const r = Math.random(); return r < 0.4 ? brand : r < 0.75 ? accent : white; }
 
-/* ---------- ロゴ読み込み ---------- */
-// 中心を原点に、最大辺が1になるよう正規化
-function normalize(obj) {
-  const wrap = new THREE.Group(); wrap.add(obj);
-  const box = new THREE.Box3().setFromObject(obj);
-  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
-  obj.position.sub(center);
-  wrap.scale.setScalar(1 / Math.max(size.x, size.y, 1e-6));
-  return wrap;
-}
-function buildSvgLogo(svgText) {
-  const data = new SVGLoader().parse(svgText);
-  const group = new THREE.Group();
-  let maxDim = 1;
-  data.paths.forEach((p) => p.subPaths.forEach((sp) => sp.getPoints().forEach((pt) => { maxDim = Math.max(maxDim, Math.abs(pt.x), Math.abs(pt.y)); })));
-  const depthBase = maxDim * 0.1;
-  let layer = 0;
-  data.paths.forEach((path) => {
-    const fill = path.userData?.style?.fill;
-    if (!fill || fill === 'none') return;
-    const color = new THREE.Color().setStyle(fill);
-    const mat = new THREE.MeshPhysicalMaterial({
-      color, metalness: 0.55, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08,
-      emissive: color, emissiveIntensity: 0.18, side: THREE.DoubleSide });
-    const depth = depthBase * (1 + layer * 0.5);
-    SVGLoader.createShapes(path).forEach((shape) => {
-      const geo = new THREE.ExtrudeGeometry(shape, {
-        depth, curveSegments: 24, bevelEnabled: true,
-        bevelThickness: depthBase * 0.2, bevelSize: depthBase * 0.12, bevelSegments: 4 });
-      geo.translate(0, 0, -depth / 2);
-      group.add(new THREE.Mesh(geo, mat));
+    function updateParticles(dt) {
+      const pos = pGeo.attributes.position.array, col = pGeo.attributes.aColor.array;
+      const siz = pGeo.attributes.aSize.array, alp = pGeo.attributes.aAlpha.array;
+      pData.forEach((d, i) => {
+        if (d.alive) {
+          d.life += dt;
+          if (d.life >= d.max) d.alive = false;
+          d.v.multiplyScalar(Math.pow(0.35, dt));      // 減速
+          d.v.y += 30 * dt;                             // 上昇気流
+          d.p.addScaledVector(d.v, dt);
+        }
+        const k = d.alive ? d.life / d.max : 1;
+        pos[i * 3] = d.p.x; pos[i * 3 + 1] = d.p.y; pos[i * 3 + 2] = d.p.z;
+        col[i * 3] = d.c.r; col[i * 3 + 1] = d.c.g; col[i * 3 + 2] = d.c.b;
+        siz[i] = d.size * (1 - k * 0.5);
+        alp[i] = d.alive ? Math.sin(Math.min(1, k) * Math.PI) * (0.7 + 0.3 * Math.sin(d.life * 25 + i)) : 0;
+      });
+      for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) pGeo.attributes[k].needsUpdate = true;
+    }
+
+    /* ---------- ロゴ読み込み ---------- */
+    // 中心を原点に、最大辺が1になるよう正規化
+    function normalize(obj) {
+      const wrap = new THREE.Group(); wrap.add(obj);
+      const box = new THREE.Box3().setFromObject(obj);
+      const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+      obj.position.sub(center);
+      wrap.scale.setScalar(1 / Math.max(size.x, size.y, 1e-6));
+      return wrap;
+    }
+    function buildSvgLogo(svgText) {
+      const data = new SVGLoader().parse(svgText);
+      const group = new THREE.Group();
+      let maxDim = 1;
+      data.paths.forEach((p) => p.subPaths.forEach((sp) => sp.getPoints().forEach((pt) => { maxDim = Math.max(maxDim, Math.abs(pt.x), Math.abs(pt.y)); })));
+      const depthBase = maxDim * 0.1;
+      let layer = 0;
+      data.paths.forEach((path) => {
+        const fill = path.userData?.style?.fill;
+        if (!fill || fill === 'none') return;
+        const color = new THREE.Color().setStyle(fill);
+        const mat = new THREE.MeshPhysicalMaterial({
+          color, metalness: 0.55, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08,
+          emissive: color, emissiveIntensity: 0.18, side: THREE.DoubleSide
+        });
+        const depth = depthBase * (1 + layer * 0.5);
+        SVGLoader.createShapes(path).forEach((shape) => {
+          const geo = new THREE.ExtrudeGeometry(shape, {
+            depth, curveSegments: 24, bevelEnabled: true,
+            bevelThickness: depthBase * 0.2, bevelSize: depthBase * 0.12, bevelSegments: 4
+          });
+          geo.translate(0, 0, -depth / 2);
+          group.add(new THREE.Mesh(geo, mat));
+        });
+        layer++;
+      });
+      group.rotation.x = Math.PI; // SVGのy下向きを補正（鏡像にならないようx軸回転）
+      return normalize(group);
+    }
+    async function buildGlbLogo(url) {
+      const gltf = await new GLTFLoader().loadAsync(url);
+      return normalize(gltf.scene);
+    }
+    async function setLogo(objPromise) {
+      try {
+        const obj = await objPromise;
+        logoSpin.clear();
+        logoSpin.add(obj);
+      } catch (e) {
+        console.error(e);
+        setStatus('ロゴの読み込みに失敗しました: ' + e.message);
+      }
+    }
+    async function loadLogoFromUrl(url) {
+      if (/\.(glb|gltf)$/i.test(url)) return buildGlbLogo(url);
+      const txt = await (await fetch(url)).text();
+      return buildSvgLogo(txt);
+    }
+    setLogo(CONFIG.logoUrl ? loadLogoFromUrl(CONFIG.logoUrl) : Promise.resolve(buildSvgLogo(DEFAULT_SVG)));
+
+    $('logoFile').addEventListener('change', async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      if (/\.(glb|gltf)$/i.test(f.name)) {
+        const url = URL.createObjectURL(f);
+        await setLogo(buildGlbLogo(url));
+      } else {
+        await setLogo(Promise.resolve(buildSvgLogo(await f.text())));
+      }
     });
-    layer++;
-  });
-  group.rotation.x = Math.PI; // SVGのy下向きを補正（鏡像にならないようx軸回転）
-  return normalize(group);
-}
-async function buildGlbLogo(url) {
-  const gltf = await new GLTFLoader().loadAsync(url);
-  return normalize(gltf.scene);
-}
-async function setLogo(objPromise) {
-  try {
-    const obj = await objPromise;
-    logoSpin.clear();
-    logoSpin.add(obj);
-  } catch (e) {
-    console.error(e);
-    setStatus('ロゴの読み込みに失敗しました: ' + e.message);
-  }
-}
-async function loadLogoFromUrl(url) {
-  if (/\.(glb|gltf)$/i.test(url)) return buildGlbLogo(url);
-  const txt = await (await fetch(url)).text();
-  return buildSvgLogo(txt);
-}
-setLogo(CONFIG.logoUrl ? loadLogoFromUrl(CONFIG.logoUrl) : Promise.resolve(buildSvgLogo(DEFAULT_SVG)));
 
-$('logoFile').addEventListener('change', async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  if (/\.(glb|gltf)$/i.test(f.name)) {
-    const url = URL.createObjectURL(f);
-    await setLogo(buildGlbLogo(url));
-  } else {
-    await setLogo(Promise.resolve(buildSvgLogo(await f.text())));
-  }
-});
-
-/* ---------- 手の検出 ---------- */
-let landmarker = null;
-async function initHands() {
-  const fileset = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
-  const opts = (delegate) => ({
-    baseOptions: {
-      modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-      delegate },
-    runningMode: 'VIDEO', numHands: 1,
-    minHandDetectionConfidence: 0.55, minHandPresenceConfidence: 0.55, minTrackingConfidence: 0.5,
-  });
-  try { landmarker = await HandLandmarker.createFromOptions(fileset, opts('GPU')); }
-  catch (e) { console.warn('GPU delegate failed, fallback to CPU', e); landmarker = await HandLandmarker.createFromOptions(fileset, opts('CPU')); }
-}
-
-/* ---------- カメラ ---------- */
-let stream = null, facing = 'user', mirrored = true;
-async function startCamera() {
-  stream?.getTracks().forEach((t) => t.stop());
-  stream = await navigator.mediaDevices.getUserMedia({
-    audio: false, video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } } });
-  video.srcObject = stream;
-  await video.play();
-  mirrored = facing === 'user';
-  video.style.transform = mirrored ? 'scaleX(-1)' : 'none';
-}
-// 映像上の正規化座標 → 画面px（object-fit: cover とミラーを考慮）
-function toScreen(nx, ny) {
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const s = Math.max(W / vw, H / vh);
-  const dw = vw * s, dh = vh * s;
-  let x = (W - dw) / 2 + nx * dw;
-  const y = (H - dh) / 2 + ny * dh;
-  if (mirrored) x = W - x;
-  return { x, y };
-}
-
-/* ---------- 状態 ---------- */
-const state = {
-  want: false, lastSeen: -1e9, appear: 0, prevAppear: 0, spinBoost: 0,
-  target: { x: 0, y: 0, size: 100, angle: 0 }, cur: { x: 0, y: 0, size: 100, angle: 0 },
-  score: 0, label: '-',
-};
-
-function handleResult(res, now) {
-  if (!res.landmarks?.length) return;
-  const lm = res.landmarks[0];
-  const wl = res.worldLandmarks?.[0] || lm;
-  const hd = (res.handedness || res.handednesses)?.[0]?.[0];
-
-  // 手のひらの法線: (人差し指付け根-手首) × (小指付け根-手首)
-  const a = new THREE.Vector3(wl[5].x - wl[0].x, wl[5].y - wl[0].y, wl[5].z - wl[0].z);
-  const b = new THREE.Vector3(wl[17].x - wl[0].x, wl[17].y - wl[0].y, wl[17].z - wl[0].z);
-  const n = new THREE.Vector3().crossVectors(a, b).normalize();
-  // MediaPipe は入力が鏡像である前提で左右を付けるため、生のカメラ映像ではラベルが逆になる
-  let anatomicalRight = hd ? hd.categoryName === 'Left' : true;
-  if (settings.flip) anatomicalRight = !anatomicalRight;
-  if (!anatomicalRight) n.negate();
-  const score = -n.y; // 1 = 手のひらが真上を向いている（画像のyは下向き）
-  state.score = score; state.label = hd?.categoryName || '-';
-
-  const on = settings.any || (state.want ? score > settings.thr - 0.2 : score > settings.thr);
-  state.want = on;
-  if (on) state.lastSeen = now;
-
-  // 画面上の位置とサイズ
-  const pts = [0, 5, 9, 13, 17].map((i) => toScreen(lm[i].x, lm[i].y));
-  const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-  const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-  const d = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
-  const palm = Math.max(d(pts[1], pts[4]) * 1.4, d(pts[0], pts[2]));
-  let ang = Math.atan2(pts[1].y - pts[4].y, pts[1].x - pts[4].x);
-  if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
-  state.target = { x: cx, y: cy, size: palm, angle: THREE.MathUtils.clamp(ang, -0.5, 0.5) };
-}
-
-const easeOutBack = (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
-
-function update(dt, t, now) {
-  if (now - state.lastSeen > 250) state.want = false;
-  state.prevAppear = state.appear;
-  state.appear = THREE.MathUtils.clamp(state.appear + (state.want ? dt / 0.7 : -dt / 0.25), 0, 1);
-
-  // 非表示から出る瞬間は位置をスナップ
-  const tg = state.target, c = state.cur;
-  if (state.prevAppear === 0) Object.assign(c, tg);
-  const k = 1 - Math.exp(-dt * 16);
-  c.x += (tg.x - c.x) * k; c.y += (tg.y - c.y) * k;
-  c.size += (tg.size - c.size) * k; c.angle += (tg.angle - c.angle) * k;
-
-  const size = c.size * settings.size;
-  rig.position.set(c.x - W / 2, H / 2 - c.y, 0);
-  rig.rotation.z = -c.angle;
-  rig.scale.setScalar(size);
-
-  const ap = state.appear;
-  const vis = state.want ? easeOutBack(ap) : ap * ap;
-  rig.visible = ap > 0.001;
-
-  // 出現した瞬間：バースト＋高速スピン
-  if (state.prevAppear === 0 && ap > 0) {
-    state.spinBoost = 14;
-    const base = rig.localToWorld(tmpV.set(0, 0.9, 0)).clone();
-    for (let i = 0; i < 70; i++) {
-      const th = Math.random() * Math.PI * 2, sp = (0.8 + Math.random() * 1.6) * size;
-      spawn(base, tmpV2.set(Math.cos(th) * sp, Math.sin(th) * sp, (Math.random() - 0.5) * sp), 0.8 + Math.random() * 0.8,
-        size * (0.06 + Math.random() * 0.1), randColor());
+    /* ---------- 手の検出 ---------- */
+    let landmarker = null;
+    async function initHands() {
+      const fileset = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+      const opts = (delegate) => ({
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+          delegate
+        },
+        runningMode: 'VIDEO', numHands: 1,
+        minHandDetectionConfidence: 0.55, minHandPresenceConfidence: 0.55, minTrackingConfidence: 0.5,
+      });
+      try { landmarker = await HandLandmarker.createFromOptions(fileset, opts('GPU')); }
+      catch (e) { console.warn('GPU delegate failed, fallback to CPU', e); landmarker = await HandLandmarker.createFromOptions(fileset, opts('CPU')); }
     }
-  }
-  state.spinBoost *= Math.pow(0.08, dt);
 
-  // ロゴ
-  const lift = 0.95 + Math.sin(t * 2.2) * 0.06;
-  logoHolder.position.set(0, lift * vis, 0.1);
-  logoHolder.scale.setScalar(Math.max(0.0001, vis));
-  logoHolder.rotation.x = Math.sin(t * 1.3) * 0.12;
-  logoSpin.rotation.y += (settings.spin + state.spinBoost) * dt;
-
-  glow.position.set(0, lift * vis, -0.3);
-  glow.scale.setScalar(2.3 * vis * (1 + Math.sin(t * 3) * 0.06));
-  glow.material.opacity = 0.65 * ap;
-
-  rings.forEach((r, i) => {
-    const ph = (t * 0.7 + i * 0.5) % 1;
-    r.scale.setScalar((0.6 + ph * 0.9) * Math.max(0.0001, vis));
-    r.material.opacity = (1 - ph) * 0.85 * ap;
-    r.position.y = 0.02;
-  });
-
-  beam.scale.set(1, lift * vis, 1);
-  beam.position.y = (lift * vis) / 2;
-  beamMat.uniforms.uOpacity.value = 0.55 * ap;
-  beamMat.uniforms.uTime.value = t;
-
-  // 常時湧き上がるキラキラ
-  if (state.want && ap > 0.2) {
-    const n = Math.random() < dt * 60 * 2.5 ? 3 : 1;
-    for (let i = 0; i < n; i++) {
-      const r = Math.random() * 0.45, th = Math.random() * Math.PI * 2;
-      const p = rig.localToWorld(tmpV.set(Math.cos(th) * r, 0.05, Math.sin(th) * r * 0.5)).clone();
-      spawn(p, tmpV2.set((Math.random() - 0.5) * 0.3 * size, (0.6 + Math.random() * 0.9) * size, 0),
-        0.9 + Math.random() * 1.0, size * (0.04 + Math.random() * 0.08), randColor());
+    /* ---------- カメラ ---------- */
+    let stream = null, facing = 'user', mirrored = true;
+    async function startCamera() {
+      stream?.getTracks().forEach((t) => t.stop());
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false, video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      video.srcObject = stream;
+      await video.play();
+      mirrored = facing === 'user';
+      video.style.transform = mirrored ? 'scaleX(-1)' : 'none';
     }
-  }
-  updateParticles(dt);
+    // 映像上の正規化座標 → 画面px（object-fit: cover とミラーを考慮）
+    function toScreen(nx, ny) {
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const s = Math.max(W / vw, H / vh);
+      const dw = vw * s, dh = vh * s;
+      let x = (W - dw) / 2 + nx * dw;
+      const y = (H - dh) / 2 + ny * dh;
+      if (mirrored) x = W - x;
+      return { x, y };
+    }
 
-  $('hint').classList.toggle('hide', state.want || !landmarker);
-  if (settings.debug) {
-    $('debug').textContent = `score ${state.score.toFixed(2)} | thr ${settings.thr.toFixed(2)} | label ${state.label} | ${state.want ? 'ON' : 'off'}`;
-  }
-}
+    /* ---------- 状態 ---------- */
+    const state = {
+      want: false, lastSeen: -1e9, appear: 0, prevAppear: 0, spinBoost: 0,
+      target: { x: 0, y: 0, size: 100, angle: 0 }, cur: { x: 0, y: 0, size: 100, angle: 0 },
+      score: 0, label: '-',
+    };
 
-/* ---------- ループ ---------- */
-let last = performance.now(), lastVT = -1;
-function loop(now) {
-  requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (landmarker && video.readyState >= 2 && video.currentTime !== lastVT) {
-    lastVT = video.currentTime;
-    try { handleResult(landmarker.detectForVideo(video, now), now); } catch (e) { console.warn(e); }
-  }
-  update(dt, now / 1000, now);
-  renderer.render(scene, camera);
-}
+    function handleResult(res, now) {
+      if (!res.landmarks?.length) return;
+      const lm = res.landmarks[0];
+      const wl = res.worldLandmarks?.[0] || lm;
+      const hd = (res.handedness || res.handednesses)?.[0]?.[0];
 
-/* ---------- 撮影 ---------- */
-let timerSec = 0;
-let busy = false;
-function capture() {
-  const pr = renderer.getPixelRatio();
-  const cw = Math.round(W * pr), ch = Math.round(H * pr);
-  const c = document.createElement('canvas'); c.width = cw; c.height = ch;
-  const g = c.getContext('2d');
+      // 手のひらの法線: (人差し指付け根-手首) × (小指付け根-手首)
+      const a = new THREE.Vector3(wl[5].x - wl[0].x, wl[5].y - wl[0].y, wl[5].z - wl[0].z);
+      const b = new THREE.Vector3(wl[17].x - wl[0].x, wl[17].y - wl[0].y, wl[17].z - wl[0].z);
+      const n = new THREE.Vector3().crossVectors(a, b).normalize();
+      let anatomicalRight = hd ? hd.categoryName === 'Right' : true;
+      if (settings.flip) anatomicalRight = !anatomicalRight;
+      if (!anatomicalRight) n.negate();
+      const score = -n.y; // 1 = 手のひらが真上を向いている（画像のyは下向き）
+      state.score = score; state.label = hd?.categoryName || '-';
 
-  // カメラ映像（cover＋ミラー）
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const s = Math.max(cw / vw, ch / vh);
-  const dw = vw * s, dh = vh * s;
-  g.save();
-  if (mirrored) { g.translate(cw, 0); g.scale(-1, 1); }
-  g.drawImage(video, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
-  g.restore();
+      const on = settings.any || (state.want ? score > settings.thr - 0.2 : score > settings.thr);
+      state.want = on;
+      if (on) state.lastSeen = now;
 
-  // 3Dレイヤー
-  renderer.render(scene, camera);
-  g.drawImage(glCanvas, 0, 0, cw, ch);
+      // 画面上の位置とサイズ
+      const pts = [0, 5, 9, 13, 17].map((i) => toScreen(lm[i].x, lm[i].y));
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      const d = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+      const palm = Math.max(d(pts[1], pts[4]) * 1.4, d(pts[0], pts[2]));
+      let ang = Math.atan2(pts[1].y - pts[4].y, pts[1].x - pts[4].x);
+      if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+      state.target = { x: cx, y: cy, size: palm, angle: THREE.MathUtils.clamp(ang, -0.5, 0.5) };
+    }
 
-  // フレーム
-  if (CONFIG.frameOnPhoto) {
-    const bh = ch * 0.11;
-    const grd = g.createLinearGradient(0, ch - bh * 1.8, 0, ch);
-    grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,.65)');
-    g.fillStyle = grd; g.fillRect(0, ch - bh * 1.8, cw, bh * 1.8);
-    const fs = Math.round(bh * 0.32);
-    g.fillStyle = '#fff'; g.textBaseline = 'middle';
-    g.font = `800 ${fs}px system-ui, -apple-system, "Hiragino Sans", sans-serif`;
-    g.fillText(CONFIG.brandName, cw * 0.05, ch - bh * 0.62);
-    g.font = `600 ${Math.round(fs * 0.62)}px system-ui, -apple-system, sans-serif`;
-    g.fillStyle = CONFIG.accentColor;
-    g.fillText(CONFIG.hashtag, cw * 0.05, ch - bh * 0.25);
-    g.textAlign = 'right'; g.fillStyle = 'rgba(255,255,255,.8)';
-    const d = new Date();
-    g.fillText(`${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`, cw * 0.95, ch - bh * 0.25);
-    g.fillStyle = CONFIG.brandColor; g.fillRect(0, ch - ch * 0.006, cw, ch * 0.006);
-  }
+    const easeOutBack = (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
 
-  $('flash').classList.remove('on'); void $('flash').offsetWidth; $('flash').classList.add('on');
+    function update(dt, t, now) {
+      if (now - state.lastSeen > 250) state.want = false;
+      state.prevAppear = state.appear;
+      state.appear = THREE.MathUtils.clamp(state.appear + (state.want ? dt / 0.7 : -dt / 0.25), 0, 1);
 
-  c.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    $('previewImg').src = url;
-    $('saveBtn').href = url;
-    $('saveBtn').download = `photo_${Date.now()}.png`;
-    const file = new File([blob], 'photo.png', { type: 'image/png' });
-    const canShare = navigator.canShare && navigator.canShare({ files: [file] });
-    $('shareBtn').style.display = canShare ? '' : 'none';
-    $('shareBtn').onclick = () => navigator.share({ files: [file], text: CONFIG.hashtag }).catch(() => {});
-    setTimeout(() => { $('preview').style.display = 'flex'; }, 250);
-  }, 'image/png');
-}
+      // 非表示から出る瞬間は位置をスナップ
+      const tg = state.target, c = state.cur;
+      if (state.prevAppear === 0) Object.assign(c, tg);
+      const k = 1 - Math.exp(-dt * 16);
+      c.x += (tg.x - c.x) * k; c.y += (tg.y - c.y) * k;
+      c.size += (tg.size - c.size) * k; c.angle += (tg.angle - c.angle) * k;
 
-async function shoot() {
-  if (busy) return; busy = true;
-  for (let i = timerSec; i > 0; i--) {
-    $('countdown').textContent = i;
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  $('countdown').textContent = '';
-  capture();
-  busy = false;
-}
+      const size = c.size * settings.size;
+      rig.position.set(c.x - W / 2, H / 2 - c.y, 0);
+      rig.rotation.z = -c.angle;
+      rig.scale.setScalar(size);
 
-/* ---------- UI ---------- */
-function setStatus(t) { $('status').textContent = t; }
-$('shutter').onclick = shoot;
-$('closeBtn').onclick = () => { $('preview').style.display = 'none'; };
-$('timerBtn').onclick = () => {
-  timerSec = { 0: 3, 3: 5, 5: 0 }[timerSec];
-  $('timerBtn').textContent = timerSec ? `⏱ ${timerSec}s` : '⏱ OFF';
-};
-$('switchBtn').onclick = async () => {
-  facing = facing === 'user' ? 'environment' : 'user';
-  try { await startCamera(); } catch (e) { console.error(e); }
-};
-$('settingsBtn').onclick = () => {
-  const s = $('settings'); s.style.display = s.style.display === 'block' ? 'none' : 'block';
-};
-$('flipChk').onchange = (e) => { settings.flip = e.target.checked; };
-$('anyChk').onchange = (e) => { settings.any = e.target.checked; };
-$('debugChk').onchange = (e) => { settings.debug = e.target.checked; $('debug').style.display = settings.debug ? 'block' : 'none'; };
-$('sizeRange').oninput = (e) => { settings.size = +e.target.value; };
-$('spinRange').oninput = (e) => { settings.spin = +e.target.value; };
-$('thrRange').oninput = (e) => { settings.thr = +e.target.value; };
-$('sizeRange').value = settings.size; $('spinRange').value = settings.spin; $('thrRange').value = settings.thr;
+      const ap = state.appear;
+      const vis = state.want ? easeOutBack(ap) : ap * ap;
+      rig.visible = ap > 0.001;
 
-$('startBtn').onclick = async () => {
-  $('startBtn').disabled = true;
-  try {
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error('このブラウザはカメラに対応していません（HTTPSで開いてください）');
-    setStatus('カメラを起動中…');
-    await startCamera();
-    setStatus('手の認識モデルを読み込み中…');
-    await initHands();
-    $('startScreen').style.display = 'none';
-  } catch (e) {
-    console.error(e);
-    setStatus('エラー: ' + (e.message || e));
-    $('startBtn').disabled = false;
-  }
-};
+      // 出現した瞬間：バースト＋高速スピン
+      if (state.prevAppear === 0 && ap > 0) {
+        state.spinBoost = 14;
+        const base = rig.localToWorld(tmpV.set(0, 0.9, 0)).clone();
+        for (let i = 0; i < 70; i++) {
+          const th = Math.random() * Math.PI * 2, sp = (0.8 + Math.random() * 1.6) * size;
+          spawn(base, tmpV2.set(Math.cos(th) * sp, Math.sin(th) * sp, (Math.random() - 0.5) * sp), 0.8 + Math.random() * 0.8,
+            size * (0.06 + Math.random() * 0.1), randColor());
+        }
+      }
+      state.spinBoost *= Math.pow(0.08, dt);
 
-window.addEventListener('resize', resize);
-resize();
-requestAnimationFrame(loop);
-</script>
+      // ロゴ
+      const lift = 0.95 + Math.sin(t * 2.2) * 0.06;
+      logoHolder.position.set(0, lift * vis, 0.1);
+      logoHolder.scale.setScalar(Math.max(0.0001, vis));
+      logoHolder.rotation.x = Math.sin(t * 1.3) * 0.12;
+      logoSpin.rotation.y += (settings.spin + state.spinBoost) * dt;
+
+      glow.position.set(0, lift * vis, -0.3);
+      glow.scale.setScalar(2.3 * vis * (1 + Math.sin(t * 3) * 0.06));
+      glow.material.opacity = 0.65 * ap;
+
+      rings.forEach((r, i) => {
+        const ph = (t * 0.7 + i * 0.5) % 1;
+        r.scale.setScalar((0.6 + ph * 0.9) * Math.max(0.0001, vis));
+        r.material.opacity = (1 - ph) * 0.85 * ap;
+        r.position.y = 0.02;
+      });
+
+      beam.scale.set(1, lift * vis, 1);
+      beam.position.y = (lift * vis) / 2;
+      beamMat.uniforms.uOpacity.value = 0.55 * ap;
+      beamMat.uniforms.uTime.value = t;
+
+      // 常時湧き上がるキラキラ
+      if (state.want && ap > 0.2) {
+        const n = Math.random() < dt * 60 * 2.5 ? 3 : 1;
+        for (let i = 0; i < n; i++) {
+          const r = Math.random() * 0.45, th = Math.random() * Math.PI * 2;
+          const p = rig.localToWorld(tmpV.set(Math.cos(th) * r, 0.05, Math.sin(th) * r * 0.5)).clone();
+          spawn(p, tmpV2.set((Math.random() - 0.5) * 0.3 * size, (0.6 + Math.random() * 0.9) * size, 0),
+            0.9 + Math.random() * 1.0, size * (0.04 + Math.random() * 0.08), randColor());
+        }
+      }
+      updateParticles(dt);
+
+      $('hint').classList.toggle('hide', state.want || !landmarker);
+      if (settings.debug) {
+        $('debug').textContent = `score ${state.score.toFixed(2)} | thr ${settings.thr.toFixed(2)} | label ${state.label} | ${state.want ? 'ON' : 'off'}`;
+      }
+    }
+
+    /* ---------- ループ ---------- */
+    let last = performance.now(), lastVT = -1;
+    function loop(now) {
+      requestAnimationFrame(loop);
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (landmarker && video.readyState >= 2 && video.currentTime !== lastVT) {
+        lastVT = video.currentTime;
+        try { handleResult(landmarker.detectForVideo(video, now), now); } catch (e) { console.warn(e); }
+      }
+      update(dt, now / 1000, now);
+      renderer.render(scene, camera);
+    }
+
+    /* ---------- 撮影 ---------- */
+    let timerSec = 0;
+    let busy = false;
+    function capture() {
+      const pr = renderer.getPixelRatio();
+      const cw = Math.round(W * pr), ch = Math.round(H * pr);
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+      const g = c.getContext('2d');
+
+      // カメラ映像（cover＋ミラー）
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const s = Math.max(cw / vw, ch / vh);
+      const dw = vw * s, dh = vh * s;
+      g.save();
+      if (mirrored) { g.translate(cw, 0); g.scale(-1, 1); }
+      g.drawImage(video, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+      g.restore();
+
+      // 3Dレイヤー
+      renderer.render(scene, camera);
+      g.drawImage(glCanvas, 0, 0, cw, ch);
+
+      // フレーム
+      if (CONFIG.frameOnPhoto) {
+        const bh = ch * 0.11;
+        const grd = g.createLinearGradient(0, ch - bh * 1.8, 0, ch);
+        grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,.65)');
+        g.fillStyle = grd; g.fillRect(0, ch - bh * 1.8, cw, bh * 1.8);
+        const fs = Math.round(bh * 0.32);
+        g.fillStyle = '#fff'; g.textBaseline = 'middle';
+        g.font = `800 ${fs}px system-ui, -apple-system, "Hiragino Sans", sans-serif`;
+        g.fillText(CONFIG.brandName, cw * 0.05, ch - bh * 0.62);
+        g.font = `600 ${Math.round(fs * 0.62)}px system-ui, -apple-system, sans-serif`;
+        g.fillStyle = CONFIG.accentColor;
+        g.fillText(CONFIG.hashtag, cw * 0.05, ch - bh * 0.25);
+        g.textAlign = 'right'; g.fillStyle = 'rgba(255,255,255,.8)';
+        const d = new Date();
+        g.fillText(`${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`, cw * 0.95, ch - bh * 0.25);
+        g.fillStyle = CONFIG.brandColor; g.fillRect(0, ch - ch * 0.006, cw, ch * 0.006);
+      }
+
+      $('flash').classList.remove('on'); void $('flash').offsetWidth; $('flash').classList.add('on');
+
+      c.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        $('previewImg').src = url;
+        $('saveBtn').href = url;
+        $('saveBtn').download = `photo_${Date.now()}.png`;
+        const file = new File([blob], 'photo.png', { type: 'image/png' });
+        const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+        $('shareBtn').style.display = canShare ? '' : 'none';
+        $('shareBtn').onclick = () => navigator.share({ files: [file], text: CONFIG.hashtag }).catch(() => { });
+        setTimeout(() => { $('preview').style.display = 'flex'; }, 250);
+      }, 'image/png');
+    }
+
+    async function shoot() {
+      if (busy) return; busy = true;
+      for (let i = timerSec; i > 0; i--) {
+        $('countdown').textContent = i;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      $('countdown').textContent = '';
+      capture();
+      busy = false;
+    }
+
+    /* ---------- UI ---------- */
+    function setStatus(t) { $('status').textContent = t; }
+    $('shutter').onclick = shoot;
+    $('closeBtn').onclick = () => { $('preview').style.display = 'none'; };
+    $('timerBtn').onclick = () => {
+      timerSec = { 0: 3, 3: 5, 5: 0 }[timerSec];
+      $('timerBtn').textContent = timerSec ? `⏱ ${timerSec}s` : '⏱ OFF';
+    };
+    $('switchBtn').onclick = async () => {
+      facing = facing === 'user' ? 'environment' : 'user';
+      try { await startCamera(); } catch (e) { console.error(e); }
+    };
+    $('settingsBtn').onclick = () => {
+      const s = $('settings'); s.style.display = s.style.display === 'block' ? 'none' : 'block';
+    };
+    $('flipChk').onchange = (e) => { settings.flip = e.target.checked; };
+    $('anyChk').onchange = (e) => { settings.any = e.target.checked; };
+    $('debugChk').onchange = (e) => { settings.debug = e.target.checked; $('debug').style.display = settings.debug ? 'block' : 'none'; };
+    $('sizeRange').oninput = (e) => { settings.size = +e.target.value; };
+    $('spinRange').oninput = (e) => { settings.spin = +e.target.value; };
+    $('thrRange').oninput = (e) => { settings.thr = +e.target.value; };
+    $('sizeRange').value = settings.size; $('spinRange').value = settings.spin; $('thrRange').value = settings.thr;
+
+    $('startBtn').onclick = async () => {
+      $('startBtn').disabled = true;
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('このブラウザはカメラに対応していません（HTTPSで開いてください）');
+        setStatus('カメラを起動中…');
+        await startCamera();
+        setStatus('手の認識モデルを読み込み中…');
+        await initHands();
+        $('startScreen').style.display = 'none';
+      } catch (e) {
+        console.error(e);
+        setStatus('エラー: ' + (e.message || e));
+        $('startBtn').disabled = false;
+      }
+    };
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(loop);
+  </script>
 </body>
+
 </html>
